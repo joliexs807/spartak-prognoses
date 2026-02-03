@@ -2,106 +2,36 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Футбольные прогнозы</title>
+<title>Спартак Прогнозы</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  margin: 0;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background: #121212;
-  color: #fff;
-}
-
-h2 {
-  margin-bottom: 10px;
-}
-
-.match {
-  background: #1e1e1e;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 15px;
-}
-
-.buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-button {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.win1 { background: #2ecc71; }
-.draw { background: #f1c40f; color: #000; }
-.win2 { background: #3498db; }
-
-button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.admin-btn {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  background: #555;
-  color: #fff;
-}
-
-#adminModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.7);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal {
-  background: #222;
-  padding: 20px;
-  border-radius: 10px;
-  width: 260px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  border: none;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h2>Прогноз на матч</h2>
+<h1>Спартак Фан Прогнозы</h1>
 
-<div class="match">
-  <strong>Команда A — Команда B</strong>
-
-  <div class="buttons">
-    <button class="win1" id="btn1">П1</button>
-    <button class="draw" id="btnX">Ничья</button>
-    <button class="win2" id="btn2">П2</button>
-  </div>
-
-  <p id="status"></p>
+<!-- Личный кабинет -->
+<div id="userPanel">
+  <h2 id="welcome"></h2>
 </div>
 
-<button class="admin-btn" id="openAdmin">Админ</button>
+<!-- Форма ввода имени -->
+<div id="nameForm">
+  <input type="text" id="username" placeholder="Введите имя">
+  <button id="saveName">Сохранить</button>
+</div>
 
-<!-- Админ вход -->
+<!-- Матчи -->
+<div id="matches"></div>
+
+<!-- Таблица лидеров -->
+<h2>Таблица лидеров</h2>
+<table id="leaderboard">
+  <tr><th>Имя</th><th>Очки</th></tr>
+</table>
+
+<!-- Админ -->
+<button class="admin-btn" id="openAdmin">Админ</button>
 <div id="adminModal">
   <div class="modal">
     <h3>Админ вход</h3>
@@ -110,47 +40,6 @@ input {
   </div>
 </div>
 
-<script>
-const buttons = document.querySelectorAll(".buttons button");
-const status = document.getElementById("status");
-
-const savedChoice = localStorage.getItem("userChoice");
-
-if (savedChoice) {
-  status.textContent = "Вы уже сделали прогноз: " + savedChoice;
-  buttons.forEach(b => b.disabled = true);
-}
-
-buttons.forEach(btn => {
-  btn.onclick = () => {
-    const value = btn.textContent;
-    localStorage.setItem("userChoice", value);
-    status.textContent = "Ваш прогноз сохранён: " + value;
-    buttons.forEach(b => b.disabled = true);
-  };
-});
-
-// админка
-const modal = document.getElementById("adminModal");
-
-document.getElementById("openAdmin").onclick = () => {
-  modal.style.display = "flex";
-};
-
-modal.onclick = e => {
-  if (e.target === modal) modal.style.display = "none";
-};
-
-document.getElementById("loginAdmin").onclick = () => {
-  const pass = document.getElementById("adminPass").value;
-  if (pass === "admin123") {
-    localStorage.setItem("isAdmin", "true");
-    window.location.href = "admin.html";
-  } else {
-    alert("Неверный пароль");
-  }
-};
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
