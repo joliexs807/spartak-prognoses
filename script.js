@@ -1,262 +1,110 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-/* ================== ПЕРЕМЕННЫЕ ================== */
-
-const loginScreen = document.querySelector(".login-screen");
-const appScreen = document.querySelector(".app");
-const loginBtn = document.getElementById("login-btn");
+// ====== Личный кабинет ======
 const usernameInput = document.getElementById("username");
+const saveNameBtn = document.getElementById("saveName");
+const userPanel = document.getElementById("userPanel");
+const welcome = document.getElementById("welcome");
+const nameForm = document.getElementById("nameForm");
 
-const userNameDisplay = document.getElementById("user-name");
-const userScoreDisplay = document.getElementById("user-score");
-const winsDisplay = document.getElementById("wins");
-const drawsDisplay = document.getElementById("draws");
-const lossesDisplay = document.getElementById("losses");
+let username = localStorage.getItem("username");
 
-const logoutBtn = document.getElementById("logout-btn");
-const themeBtn = document.getElementById("theme-btn");
-
-const avatarDisplay = document.getElementById("avatar-display");
-const avatars = document.querySelectorAll(".avatar");
-
-/* ====== АДМИН ====== */
-const ADMIN_PASSWORD = "spartak1922";
-const adminOpen = document.getElementById("admin-open");
-const adminLogin = document.getElementById("admin-login");
-const adminPanel = document.getElementById("admin-panel");
-const adminPassInput = document.getElementById("admin-password");
-const adminLoginBtn = document.getElementById("admin-login-btn");
-const adminExit = document.getElementById("admin-exit");
-const resetUserBtn = document.getElementById("reset-user");
-
-/* ================== ДАННЫЕ ================== */
-
-let username = "";
-let avatar = "🦁";
-
-let userData = {
-  score: 0,
-  wins: 0,
-  draws: 0,
-  losses: 0,
-  history: {}
-};
-
-/* ================== АВАТАР ================== */
-
-avatars.forEach(a => {
-  a.onclick = () => {
-    avatar = a.dataset.emoji;
-    avatarDisplay.textContent = avatar;
-  };
-});
-
-/* ================== АВТОВХОД ================== */
-
-const savedUser = localStorage.getItem("currentUser");
-
-if (savedUser) {
-  username = savedUser;
-  const savedData = localStorage.getItem("user_" + username);
-  if (savedData) userData = JSON.parse(savedData);
-
-  avatar = localStorage.getItem("avatar_" + username) || "🦁";
-  showApp();
-} else {
-  loginScreen.style.display = "flex";
-}
-
-/* ================== ЛОГИН ================== */
-
-loginBtn.onclick = () => {
-  const name = usernameInput.value.trim();
-  if (!name) return alert("Введите имя");
-
-  username = name;
-  localStorage.setItem("currentUser", username);
-
-  const savedData = localStorage.getItem("user_" + username);
-  if (savedData) {
-    userData = JSON.parse(savedData);
+function showWelcome() {
+  if(username) {
+    nameForm.style.display = "none";
+    welcome.textContent = "Привет, " + username + "!";
   } else {
-    userData = { score: 0, wins: 0, draws: 0, losses: 0, history: {} };
-    localStorage.setItem("user_" + username, JSON.stringify(userData));
+    nameForm.style.display = "block";
   }
-
-  localStorage.setItem("avatar_" + username, avatar);
-
-  loginScreen.classList.add("hidden");
-  setTimeout(showApp, 600);
-};
-
-/* ================== ВЫХОД ================== */
-
-logoutBtn.onclick = () => {
-  localStorage.removeItem("currentUser");
-  location.reload();
-};
-
-/* ================== ТЕМА ================== */
-
-themeBtn.onclick = () => {
-  document.body.classList.toggle("light-theme");
-};
-
-/* ================== ПОКАЗ ПРИЛОЖЕНИЯ ================== */
-
-function showApp() {
-  loginScreen.style.display = "none";
-  appScreen.classList.add("visible");
-
-  userNameDisplay.textContent = username;
-  userScoreDisplay.textContent = userData.score;
-  winsDisplay.textContent = userData.wins;
-  drawsDisplay.textContent = userData.draws;
-  lossesDisplay.textContent = userData.losses;
-  avatarDisplay.textContent = avatar;
-
-  initMatches();
 }
 
-/* ================== МАТЧИ ================== */
+saveNameBtn.onclick = () => {
+  const val = usernameInput.value.trim();
+  if(val) {
+    username = val;
+    localStorage.setItem("username", username);
+    showWelcome();
+    renderLeaderboard();
+  }
+}
 
-function initMatches() {
-  document.querySelectorAll(".match").forEach(match => {
+showWelcome();
 
-    const matchName = match.dataset.match;
-    const scoreBox = match.querySelector(".score strong");
-    const historyList = match.querySelector(".history-list");
-    const buttons = match.querySelectorAll(".main-btn");
+// ====== Матчи ======
+const matchesData = [
+  {id:1, team1:"Спартак", team2:"ЦСКА"},
+  {id:2, team1:"Зенит", team2:"Локомотив"},
+  {id:3, team1:"Динамо", team2:"Краснодар"}
+];
 
-    if (!userData.history[matchName]) {
-      userData.history[matchName] = null;
-    }
+function renderMatches() {
+  const container = document.getElementById("matches");
+  container.innerHTML = "";
+  matchesData.forEach(match=>{
+    const div = document.createElement("div");
+    div.className = "match";
+    div.innerHTML = `<strong>${match.team1} - ${match.team2}</strong>`;
+    const buttonsDiv = document.createElement("div");
+    buttonsDiv.className = "buttons";
 
-    historyList.innerHTML = "";
+    ["П1","Ничья","П2"].forEach(choice=>{
+      const btn = document.createElement("button");
+      btn.textContent = choice;
+      if(localStorage.getItem("match_"+match.id)) btn.disabled = true;
+      if(choice==="П1") btn.className="win1";
+      if(choice==="Ничья") btn.className="draw";
+      if(choice==="П2") btn.className="win2";
 
-    if (userData.history[matchName]) {
-      const li = document.createElement("li");
-      li.textContent = userData.history[matchName].text;
-      historyList.appendChild(li);
-
-      buttons.forEach(b => {
-        b.disabled = true;
-        b.classList.add("locked");
-        if (b.textContent === userData.history[matchName].choice) {
-          b.classList.add("selected");
-        }
-      });
-    }
-
-    buttons.forEach(btn => {
-      btn.onclick = () => {
-
-        if (userData.history[matchName]) return;
-
-        buttons.forEach(b => {
-          b.disabled = true;
-          b.classList.add("locked");
-        });
-
-        btn.classList.add("selected");
-
-        let points = 0;
-
-        if (btn.textContent.includes("Победа")) {
-          points = 3;
-          userData.wins++;
-        } else if (btn.textContent.includes("Ничья")) {
-          points = 1;
-          userData.draws++;
-        } else {
-          userData.losses++;
-        }
-
-        userData.score += points;
-
-        const record = {
-          choice: btn.textContent,
-          text: `${btn.textContent} — +${points} очк.`,
-          time: Date.now()
-        };
-
-        userData.history[matchName] = record;
-
-        const li = document.createElement("li");
-        li.textContent = record.text;
-        historyList.appendChild(li);
-
-        scoreBox.textContent = userData.score;
-        userScoreDisplay.textContent = userData.score;
-        winsDisplay.textContent = userData.wins;
-        drawsDisplay.textContent = userData.draws;
-        lossesDisplay.textContent = userData.losses;
-
-        localStorage.setItem("user_" + username, JSON.stringify(userData));
-      };
+      btn.onclick = ()=>{
+        localStorage.setItem("match_"+match.id, choice);
+        btn.disabled=true;
+        Array.from(buttonsDiv.children).forEach(b=>b.disabled=true);
+        updateLeaderboard(username);
+      }
+      buttonsDiv.appendChild(btn);
     });
 
+    div.appendChild(buttonsDiv);
+    container.appendChild(div);
   });
 }
 
-/* ================== АДМИНКА ================== */
+renderMatches();
 
-adminOpen.onclick = () => adminLogin.classList.remove("hidden");
-
-adminLoginBtn.onclick = () => {
-  if (adminPassInput.value === ADMIN_PASSWORD) {
-    localStorage.setItem("isAdmin", "true");
-    adminLogin.classList.add("hidden");
-    adminPanel.classList.remove("hidden");
-  } else {
-    alert("Неверный пароль");
-  }
-};
-
-if (localStorage.getItem("isAdmin") === "true") {
-  adminPanel.classList.remove("hidden");
+// ====== Таблица лидеров ======
+function getLeaderboard() {
+  const data = JSON.parse(localStorage.getItem("leaderboard")||"{}");
+  return data;
 }
 
-adminExit.onclick = () => {
-  localStorage.removeItem("isAdmin");
-  adminPanel.classList.add("hidden");
-};
-
-/* ================== СБРОС АККАУНТА ================== */
-
-if (resetUserBtn) {
-  resetUserBtn.onclick = () => {
-    if (!confirm("Сбросить аккаунт полностью?")) return;
-
-    const currentUser = localStorage.getItem("currentUser");
-    if (!currentUser) return alert("Нет активного пользователя");
-
-    localStorage.removeItem("user_" + currentUser);
-    alert("Аккаунт сброшен");
-    location.reload();
-  };
+function updateLeaderboard(name) {
+  const data = getLeaderboard();
+  if(!data[name]) data[name]=0;
+  data[name]+=1;
+  localStorage.setItem("leaderboard", JSON.stringify(data));
+  renderLeaderboard();
 }
 
-});
-const adminBtn = document.getElementById("adminBtn");
-const adminModal = document.getElementById("adminModal");
-const adminLogin = document.getElementById("adminLogin");
-const adminClose = document.getElementById("adminClose");
+function renderLeaderboard() {
+  const table = document.getElementById("leaderboard");
+  table.innerHTML = "<tr><th>Имя</th><th>Очки</th></tr>";
+  const data = getLeaderboard();
+  Object.keys(data).sort((a,b)=>data[b]-data[a]).forEach(name=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${name}</td><td>${data[name]}</td>`;
+    table.appendChild(tr);
+  });
+}
 
-adminBtn.onclick = () => {
-  adminModal.classList.remove("hidden");
-};
+renderLeaderboard();
 
-adminClose.onclick = () => {
-  adminModal.classList.add("hidden");
-};
+// ====== Админка ======
+const modal = document.getElementById("adminModal");
+document.getElementById("openAdmin").onclick = ()=>modal.style.display="flex";
+modal.onclick = e=>{if(e.target===modal) modal.style.display="none";};
 
-adminLogin.onclick = () => {
-  const pass = document.getElementById("adminPassword").value;
-  if (pass === "spartak1922") {
-    localStorage.setItem("isAdmin", "true");
-    window.location.href = "admin.html";
-  } else {
-    alert("Неверный пароль");
-  }
+document.getElementById("loginAdmin").onclick = ()=>{
+  const pass = document.getElementById("adminPass").value;
+  if(pass==="admin123") {
+    localStorage.setItem("isAdmin","true");
+    window.location.href="admin.html";
+  } else alert("Неверный пароль");
 };
